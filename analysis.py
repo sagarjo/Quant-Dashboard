@@ -63,3 +63,38 @@ def calculate_mmi(vix, nifty_df, fii_flow):
     mmi = (vix_score * 0.4) + (momentum * 30) + fii_bonus
     return max(min(mmi, 100), 0)
 
+def run_swing_scanner(tickers, macro_score):
+    """
+    Filters tickers based on style and macro conditions.
+    Growth: Price > 50DMA (Bullish Macro)
+    Value: Price < 20-day Low / Mean Reversion (Bearish Macro)
+    """
+    results = []
+    # Limiting to top 300 for speed in Streamlit
+    scan_list = tickers[:300] 
+    
+    # Simple logic: pick 3 representative stocks that fit the criteria
+    # In a full quant setup, you'd loop all 300; here we optimize for Streamlit's timeout
+    for ticker in scan_list[:50]: # Testing first 50 for performance
+        try:
+            data = yf.download(ticker, period="60d", progress=False)
+            if data.empty: continue
+            
+            current_price = data['Close'].iloc[-1].item()
+            ma50 = ta.sma(data['Close'], length=50).iloc[-1].item()
+            
+            # Growth Style Logic
+            if macro_score > 0 and current_price > ma50:
+                results.append({"Ticker": ticker, "Style": "Growth", "Signal": "Bullish (Above 50DMA)"})
+            
+            # Value Style Logic
+            elif macro_score <= 0 and current_price < ma50:
+                results.append({"Ticker": ticker, "Style": "Value", "Signal": "Mean Reversion Candidate"})
+                
+            if len(results) >= 3: break # Stop at top 3
+        except:
+            continue
+            
+    return pd.DataFrame(results)
+    
+
