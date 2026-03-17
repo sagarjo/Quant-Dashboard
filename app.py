@@ -13,10 +13,24 @@ mmi = calculate_mmi(vix, nifty, 500) # Mock FII flow
 st.metric("Market Mood Index (MMI)", f"{mmi:.2f}%", delta="Greed" if mmi > 50 else "Fear")
 
 # 2. Global-to-India Macro
-with st.expander("Global Macro Analysis"):
-    st.info("LLM Scoring Headlines for Fed, Crude, and USD-INR...")
+# with st.expander("Global Macro Analysis"):
+   # st.info("LLM Scoring Headlines for Fed, Crude, and USD-INR...")
     # Mock LLM Output
-    st.write("Current Sentiment Score: **+0.4 (Bullish)**")
+   # st.write("Current Sentiment Score: **+0.4 (Bullish)**")
+
+# --- 2. Global-to-India Macro (No API Key Required) ---
+with st.expander("🌍 Global Macro Mapper (Rule-Based)"):
+    mapper = MacroMapper()
+    macro_score = mapper.get_macro_sentiment()
+    
+    if macro_score > 0.1:
+        st.success(f"Macro Sentiment: {macro_score} (Bullish for India)")
+    elif macro_score < -0.1:
+        st.error(f"Macro Sentiment: {macro_score} (Bearish for India)")
+    else:
+        st.warning(f"Macro Sentiment: {macro_score} (Neutral)")
+        
+    st.caption("Criteria: USD-INR Stability, Crude Oil Prices, and Fed Interest Rates.")
 
 # 3. Top 300 Swing Scanner
 st.subheader("🚀 Top 300 Swing Scanner")
