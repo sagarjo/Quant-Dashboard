@@ -30,15 +30,32 @@ else:
     st.success(f"Global Sentiment: {sentiment} (Bullish/Neutral)")
 
 
-# 3. Top 300 Swing Scanner
+# --- 3. Top 300 Swing Scanner (Live) ---
+st.divider()
 st.subheader("🚀 Top 300 Swing Scanner")
-if st.button("Run Scanner"):
-    # Logic: Filter top 300, check RS and 50DMA
-    st.table(pd.DataFrame({
-        "Ticker": ["RELIANCE.NS", "ITC.NS", "HDFCBANK.NS"],
-        "Style": ["Growth", "Value", "Value"],
-        "Signal": ["High RS Buy", "Mean Reversion", "Accumulate"]
-    }))
+
+if st.button("Run Live Market Scan"):
+    with st.spinner("Fetching Nifty 500 and analyzing top 300 stocks..."):
+        from data_fetcher import get_nifty_500_tickers
+        from analysis import run_swing_scanner
+        
+        # 1. Get Tickers
+        all_tickers = get_nifty_500_tickers()
+        
+        # 2. Get Macro Sentiment
+        mapper = MacroMapper()
+        macro_score = mapper.get_macro_sentiment()
+        
+        # 3. Run Scanner
+        scanner_results = run_swing_scanner(all_tickers, macro_score)
+        
+        if not scanner_results.empty:
+            st.success(f"Scan complete based on {('Bullish' if macro_score > 0 else 'Bearish')} Macro.")
+            st.table(scanner_results)
+        else:
+            st.warning("No stocks currently match the swing criteria.")
+           
+
 
 # 4. Portfolio Intelligence
 st.sidebar.header("Portfolio Upload")
