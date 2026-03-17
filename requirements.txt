@@ -1,0 +1,9 @@
+streamlit
+yfinance
+nsepython
+pandas
+pandas_ta
+fpdf
+matplotlib
+requests
+beautifulsoup4
