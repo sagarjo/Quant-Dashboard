@@ -35,4 +35,22 @@ def get_market_context():
         fii_dii = {"fii_net": 0, "dii_net": 0}
         
     return vix, nifty, fii_dii
+
+import requests
+import io
+
+def get_nifty_500_tickers():
+    """Fetches the Nifty 500 list from NSE and returns symbols with .NS suffix."""
+    url = "https://archives.nseindia.com/content/indices/ind_nifty500list.csv"
+    try:
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        response = requests.get(url, headers=headers).content
+        df = pd.read_csv(io.StringIO(response.decode('utf-8')))
+        # Convert to yfinance format
+        tickers = [str(symbol) + ".NS" for symbol in df['Symbol'].tolist()]
+        return tickers
+    except Exception as e:
+        print(f"Error fetching Nifty 500: {e}")
+        return ["RELIANCE.NS", "TCS.NS", "INFY.NS"] # Minimal fallback
+        
     
