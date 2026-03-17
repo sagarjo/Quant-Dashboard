@@ -45,14 +45,15 @@ selected_sector = st.selectbox("Choose Sector to Scan", sector_options)
 if st.button("Run Sector-Specific Scan"):
     with st.spinner(f"Scanning {selected_sector} stocks..."):
         from data_fetcher import get_nifty_500_tickers
+        # [span_2](start_span)FIX: Added run_sector_scanner to the import list[span_2](end_span)
+        from analysis import run_sector_scanner, MacroMapper 
         
-        # For simplicity, we filter the Nifty 500 list by common sector keywords
         all_tickers = get_nifty_500_tickers()
         
-        # Placeholder for sector filtering logic
-        # In a real setup, you'd match the ticker against the NSE Master List
-        
+        mapper = MacroMapper()
         macro_score = mapper.get_macro_sentiment()
+        
+        # [span_3](start_span)Now this will work without the NameError[span_3](end_span)
         scanner_results = run_sector_scanner(all_tickers, macro_score)
         
         if not scanner_results.empty:
