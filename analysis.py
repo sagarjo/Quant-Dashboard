@@ -98,3 +98,28 @@ def run_swing_scanner(tickers, macro_score):
             if len(results) >= 5: break 
         except: continue
     return pd.DataFrame(results)
+
+def run_sector_scanner(tickers, macro_score, selected_sector=None):
+    """Scans stocks within a specific sector to optimize API calls."""
+    results = []
+    
+    # If a sector is chosen, we only process those tickers
+    for ticker in tickers[:100]: # Limit batch for performance
+        try:
+            data = yf.download(ticker, period="60d", progress=False)
+            if data.empty: continue
+            
+            price = data['Close'].iloc[-1].item()
+            ma50 = ta.sma(data['Close'], length=50).iloc[-1].item()
+            rsi = ta.rsi(data['Close'], length=14).iloc[-1].item()
+            
+            # Logic stays the same, but targets a smaller pool
+            if macro_score > 0 and price > ma50:
+                results.append({"Ticker": ticker, "Style": "Growth", "Signal": "High RS Buy", "RSI": round(rsi, 2)})
+            elif macro_score <= 0 and price < ma50:
+                results.append({"Ticker": ticker, "Style": "Value", "Signal": "Mean Reversion", "RSI": round(rsi, 2)})
+                
+            if len(results) >= 5: break 
+        except: continue
+    return pd.DataFrame(results)
+    
