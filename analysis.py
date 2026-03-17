@@ -3,13 +3,40 @@ import pandas_ta as ta
 import sqlite3
 import yfinance as yf
 
-class MacroMapper:
+class MacroMapper_API:
     def __init__(self, api_key="placeholder"):
         self.api_key = api_key
 
     def score_headlines(self, headlines=None):
         # Mock logic for the analyzer
         return {"Fed": 0.5, "Crude": -0.2, "USDINR": -0.1}
+
+
+class MacroMapper:
+    def __init__(self, api_key=None):
+        self.api_key = api_key
+
+    def get_macro_sentiment(self):
+        """
+        Rule-based sentiment scoring without an LLM.
+        Scoring: -1 (Very Bearish for India) to +1 (Very Bullish).
+        """
+        # Logic 1: Crude Oil (High prices hurt Indian Fiscal Deficit)
+        # Mocking a crude check; in production, you'd fetch 'CL=F' from yfinance
+        crude_price = 80 
+        crude_score = -0.5 if crude_price > 75 else 0.3
+        
+        # Logic 2: USD-INR (Weak Rupee is bad for imports/inflation)
+        usd_inr = 83.5
+        currency_score = -0.4 if usd_inr > 83 else 0.2
+        
+        # Logic 3: US Fed (High rates lead to FII outflow from India)
+        fed_stance = "Hawkish" # Mocked
+        fed_score = -0.6 if fed_stance == "Hawkish" else 0.5
+        
+        total_score = (crude_score + currency_score + fed_score) / 3
+        return round(total_score, 2)
+
 
 class PortfolioManager:
     def __init__(self, db_path="portfolio.db"):
