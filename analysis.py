@@ -64,37 +64,37 @@ def calculate_mmi(vix, nifty_df, fii_flow):
     return max(min(mmi, 100), 0)
 
 def run_swing_scanner(tickers, macro_score):
-    """
-    Filters tickers based on style and macro conditions.
-    Growth: Price > 50DMA (Bullish Macro)
-    Value: Price < 20-day Low / Mean Reversion (Bearish Macro)
-    """
+    """Filters top stocks and includes raw technical data."""
     results = []
-    # Limiting to top 300 for speed in Streamlit
-    scan_list = tickers[:300] 
-    
-    # Simple logic: pick 3 representative stocks that fit the criteria
-    # In a full quant setup, you'd loop all 300; here we optimize for Streamlit's timeout
-    for ticker in scan_list[:50]: # Testing first 50 for performance
+    for ticker in tickers[:40]:
         try:
-            data = yf.download(ticker, period="60d", progress=False)
+            data = yf.download(ticker, period="100d", progress=False)
             if data.empty: continue
             
-            current_price = data['Close'].iloc[-1].item()
-            ma50 = ta.sma(data['Close'], length=50).iloc[-1].item()
+            # Calculate Technicals
+            current_price = round(data['Close'].iloc[-1].item(), 2)
+            ma50 = round(ta.sma(data['Close'], length=50).iloc[-1].item(), 2)
+            rsi = round(ta.rsi(data['Close'], length=14).iloc[-1].item(), 2)
             
-            # Growth Style Logic
+            # Logic for Signal
             if macro_score > 0 and current_price > ma50:
-                results.append({"Ticker": ticker, "Style": "Growth", "Signal": "Bullish (Above 50DMA)"})
-            
-            # Value Style Logic
+                signal = "High RS Buy"
+                style = "Growth"
             elif macro_score <= 0 and current_price < ma50:
-                results.append({"Ticker": ticker, "Style": "Value", "Signal": "Mean Reversion Candidate"})
+                signal = "Mean Reversion"
+                style = "Value"
+            else:
+                continue # Skip if it doesn't meet the primary swing criteria
                 
-            if len(results) >= 3: break # Stop at top 3
-        except:
-            continue
+            results.append({
+                "Ticker": ticker, 
+                "Price": current_price,
+                "50DMA": ma50, 
+                "RSI": rsi,
+                "Style": style, 
+                "Signal": signal
+            })
             
+            if len(results) >= 5: break 
+        except: continue
     return pd.DataFrame(results)
-    
-
