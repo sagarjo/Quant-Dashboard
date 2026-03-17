@@ -1,5 +1,5 @@
 import yfinance as yf
-from nsepython import nse_fii_dii
+from nsepython import nse_fiidii
 import pandas as pd
 
 def fetch_stock_data(ticker, period="1y"):
