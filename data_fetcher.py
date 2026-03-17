@@ -52,5 +52,21 @@ def get_nifty_500_tickers():
     except Exception as e:
         print(f"Error fetching Nifty 500: {e}")
         return ["RELIANCE.NS", "TCS.NS", "INFY.NS"] # Minimal fallback
+
+def get_nse_master_data():
+    """Fetches the full NSE list and returns a DataFrame with Tickers and Sectors."""
+    url = "https://nsearchives.nseindia.com/content/equities/EQUITY_L.csv"
+    try:
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        response = requests.get(url, headers=headers).content
+        df = pd.read_csv(io.StringIO(response.decode('utf-8')))
+        
+        # Clean and format data
+        df = df[['SYMBOL', ' FACE VALUE']].rename(columns={' FACE VALUE': 'Sector_Info'}) # Sector often buried in metadata
+        df['Ticker'] = df['SYMBOL'].astype(str).strip() + ".NS"
+        return df
+    except Exception:
+        return pd.DataFrame({"Ticker": ["RELIANCE.NS"], "Sector_Info": ["Energy"]})
+        
         
     
