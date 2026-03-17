@@ -1,5 +1,5 @@
 import streamlit as st
-from analysis import calculate_mmi, ûPortfolioManager, MacroMapper
+from analysis import calculate_mmi, PortfolioManager, MacroMapper
 from data_fetcher import get_market_context
 import pandas as pd
 
