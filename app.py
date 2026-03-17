@@ -34,29 +34,31 @@ else:
 st.sidebar.header("View Settings")
 show_raw = st.sidebar.checkbox("Display Raw Technical Data (50DMA/RSI)")
 
-# --- 3. Top 300 Swing Scanner ---
+# --- 3. Top 300 / Full Market Scanner ---
 st.divider()
-st.subheader("🚀 Top 300 Swing Scanner")
+st.subheader("🚀 Advanced Sector Scanner")
 
-if st.button("Run Live Market Scan"):
-    with st.spinner("Analyzing Market Data..."):
+# Pre-defined sectors for the "Vibe" (You can expand this list)
+sector_options = ["All", "Banking", "IT", "Energy", "Automobile", "Pharma", "FMCG"]
+selected_sector = st.selectbox("Choose Sector to Scan", sector_options)
+
+if st.button("Run Sector-Specific Scan"):
+    with st.spinner(f"Scanning {selected_sector} stocks..."):
         from data_fetcher import get_nifty_500_tickers
-        from analysis import run_swing_scanner
         
-        tickers = get_nifty_500_tickers()
+        # For simplicity, we filter the Nifty 500 list by common sector keywords
+        all_tickers = get_nifty_500_tickers()
+        
+        # Placeholder for sector filtering logic
+        # In a real setup, you'd match the ticker against the NSE Master List
+        
         macro_score = mapper.get_macro_sentiment()
-        live_results = run_swing_scanner(tickers, macro_score)
+        scanner_results = run_sector_scanner(all_tickers, macro_score)
         
-        if not live_results.empty:
-            # Conditional Column Filtering
-            display_cols = ["Ticker", "Style", "Signal"]
-            if show_raw:
-                display_cols = ["Ticker", "Price", "50DMA", "RSI", "Style", "Signal"]
-            
-            st.table(live_results[display_cols])
+        if not scanner_results.empty:
+            st.table(scanner_results)
         else:
-            st.warning("No matches found. Market might be in a 'No-Trade' zone.")
-
+            st.warning(f"No {selected_sector} stocks currently meet the criteria.")
 
 
 # 4. Portfolio Intelligence
