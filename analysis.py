@@ -40,40 +40,47 @@ class PortfolioManager:
         return "Hold"
 
 
-def calculate_mmi(vix, nifty_df, fii_flow):
+
+    def calculate_mmi(vix, nifty_df, fii_flow):
     """
-    Optimized MMI with Scalar Fixes to prevent ValueErrors.
+    MMI Engine with Scalar and NoneType protection.
     """
-    if nifty_df is None or nifty_df.empty or len(nifty_df) < 90:
+    # 1. Broad safety gate: Ensure DataFrame has enough rows
+    if nifty_df is None or nifty_df.empty or len(nifty_df) < 95:
         return 50.0
 
-    # 1. Trend Momentum Fix
-    nifty_df['90SMA'] = nifty_df['Close'].rolling(window=90).mean()
-    
-    # Use .iloc[-1].item() to ensure we get a single number, not a series
-    curr_price = nifty_df['Close'].iloc[-1].item()
-    sma_90 = nifty_df['90SMA'].iloc[-1].item()
-    
-    momentum_score = 100 if curr_price > sma_90 else 0
-
-    # 2. Volatility Fix
-    vix_val = vix.item() if hasattr(vix, 'item') else float(vix)
-    vix_score = max(min(100 - ((vix_val - 12) * 6.5), 100), 0)
-
-    # 3. Market Demand Fix
-    rsi_series = ta.rsi(nifty_df['Close'], length=14)
-    demand_score = rsi_series.iloc[-1].item()
-
-    # 4. FII Influence
     try:
-        fii_val = float(fii_flow)
-        fii_score = 100 if fii_val > 0 else 0
-    except:
-        fii_score = 50
+        # 2. Trend Momentum Fix
+        nifty_df['90SMA'] = nifty_df['Close'].rolling(window=90).mean()
+        curr_price = nifty_df['Close'].iloc[-1].item()
+        sma_90 = nifty_df['90SMA'].iloc[-1].item()
+        momentum_score = 100 if curr_price > sma_90 else 0
 
-    mmi = (vix_score * 0.3) + (momentum_score * 0.3) + (demand_score * 0.2) + (fii_score * 0.2)
-    return round(max(min(mmi, 100), 0), 2)
-    
+        # 3. Volatility Fix
+        vix_val = vix.item() if hasattr(vix, 'item') else float(vix)
+        vix_score = max(min(100 - ((vix_val - 12) * 6.5), 100), 0)
+
+        # 4. Market Demand (RSI) FIX: Check if series is valid before indexing
+        rsi_series = ta.rsi(nifty_df['Close'], length=14)
+        
+        # Guard against NoneType or empty RSI
+        if rsi_series is not None and len(rsi_series.dropna()) > 0:
+            demand_score = rsi_series.dropna().iloc[-1].item()
+        else:
+            demand_score = 50.0 # Neutral fallback
+
+        # 5. FII Influence
+        fii_score = 100 if float(fii_flow) > 0 else 0
+
+        # Weighted MMI
+        mmi = (vix_score * 0.3) + (momentum_score * 0.3) + (demand_score * 0.2) + (fii_score * 0.2)
+        return round(max(min(mmi, 100), 0), 2)
+        
+    except Exception as e:
+        # Final catch-all for unexpected data errors
+        print(f"MMI Logic Error: {e}")
+        return 50.0
+
 
 
 def run_swing_scanner(tickers, macro_score):
