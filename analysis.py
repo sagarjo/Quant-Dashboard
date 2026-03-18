@@ -43,43 +43,44 @@ class PortfolioManager:
 
     def calculate_mmi(vix, nifty_df, fii_flow):
     """
-    MMI Engine with Scalar and NoneType protection.
+    Optimized MMI with proper indentation and safety gates.
     """
-    # 1. Broad safety gate: Ensure DataFrame has enough rows
+    # [span_4](start_span)Safety gate: Ensure DataFrame has enough data[span_4](end_span)
     if nifty_df is None or nifty_df.empty or len(nifty_df) < 95:
         return 50.0
 
     try:
-        # 2. Trend Momentum Fix
+        # 1. [span_5](start_span)Trend Momentum (90-day SMA)[span_5](end_span)
         nifty_df['90SMA'] = nifty_df['Close'].rolling(window=90).mean()
         curr_price = nifty_df['Close'].iloc[-1].item()
         sma_90 = nifty_df['90SMA'].iloc[-1].item()
         momentum_score = 100 if curr_price > sma_90 else 0
 
-        # 3. Volatility Fix
+        # 2. [span_6](start_span)Volatility (VIX Mean Reversion)[span_6](end_span)
         vix_val = vix.item() if hasattr(vix, 'item') else float(vix)
         vix_score = max(min(100 - ((vix_val - 12) * 6.5), 100), 0)
 
-        # 4. Market Demand (RSI) FIX: Check if series is valid before indexing
+        # 3. [span_7](start_span)Market Demand (RSI) with Safety Gate[span_7](end_span)
+        import pandas_ta as ta
         rsi_series = ta.rsi(nifty_df['Close'], length=14)
         
-        # Guard against NoneType or empty RSI
-        if rsi_series is not None and len(rsi_series.dropna()) > 0:
+        if rsi_series is not None and not rsi_series.dropna().empty:
             demand_score = rsi_series.dropna().iloc[-1].item()
         else:
-            demand_score = 50.0 # Neutral fallback
+            demand_score = 50.0
 
-        # 5. FII Influence
+        # 4. [span_8](start_span)FII Influence[span_8](end_span)
         fii_score = 100 if float(fii_flow) > 0 else 0
 
-        # Weighted MMI
+        # [span_9](start_span)Final Weighted Calculation[span_9](end_span)
         mmi = (vix_score * 0.3) + (momentum_score * 0.3) + (demand_score * 0.2) + (fii_score * 0.2)
         return round(max(min(mmi, 100), 0), 2)
         
     except Exception as e:
-        # Final catch-all for unexpected data errors
-        print(f"MMI Logic Error: {e}")
+        # [span_10](start_span)Catch-all to prevent app crashes if logic fails[span_10](end_span)
+        print(f"MMI Error: {e}")
         return 50.0
+
 
 
 
