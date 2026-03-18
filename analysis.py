@@ -42,40 +42,38 @@ class PortfolioManager:
 
 def calculate_mmi(vix, nifty_df, fii_flow):
     """
-    Optimized MMI: Incorporates 4 core professional factors.
+    Optimized MMI with Scalar Fixes to prevent ValueErrors.
     """
     if nifty_df is None or nifty_df.empty or len(nifty_df) < 90:
         return 50.0
 
-    # 1. Trend Momentum (Price vs. 90-day Moving Average)
+    # 1. Trend Momentum Fix
     nifty_df['90SMA'] = nifty_df['Close'].rolling(window=90).mean()
-    curr_price = nifty_df['Close'].iloc[-1]
-    sma_90 = nifty_df['90SMA'].iloc[-1]
+    
+    # Use .iloc[-1].item() to ensure we get a single number, not a series
+    curr_price = nifty_df['Close'].iloc[-1].item()
+    sma_90 = nifty_df['90SMA'].iloc[-1].item()
+    
     momentum_score = 100 if curr_price > sma_90 else 0
 
-    # 2. Volatility (VIX Mean Reversion)
-    # Standard VIX range is 12-25. Lower VIX = Higher Greed.
+    # 2. Volatility Fix
     vix_val = vix.item() if hasattr(vix, 'item') else float(vix)
     vix_score = max(min(100 - ((vix_val - 12) * 6.5), 100), 0)
 
-    # 3. Market Demand (Price Strength / RSI)
-    # RSI > 70 is Greed; RSI < 30 is Fear
-    rsi = ta.rsi(nifty_df['Close'], length=14).iloc[-1]
-    demand_score = float(rsi)
+    # 3. Market Demand Fix
+    rsi_series = ta.rsi(nifty_df['Close'], length=14)
+    demand_score = rsi_series.iloc[-1].item()
 
     # 4. FII Influence
     try:
-        # Convert net flow to a score between 0 and 100
         fii_val = float(fii_flow)
         fii_score = 100 if fii_val > 0 else 0
     except:
         fii_score = 50
 
-    # Final Weighted Average
-    # Weights: Volatility(30%), Momentum(30%), Demand(20%), FII(20%)
     mmi = (vix_score * 0.3) + (momentum_score * 0.3) + (demand_score * 0.2) + (fii_score * 0.2)
-    
     return round(max(min(mmi, 100), 0), 2)
+    
 
 
 def run_swing_scanner(tickers, macro_score):
