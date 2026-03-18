@@ -39,7 +39,7 @@ class PortfolioManager:
         if mmi_score > 70 and rsi > 65: return "Sell/Trim"
         return "Hold"
 
-def calculate_mmi(vix, nifty_df, fii_flow):
+
 def calculate_mmi(vix, nifty_df, fii_flow):
     """
     Optimized MMI: Incorporates 4 core professional factors.
